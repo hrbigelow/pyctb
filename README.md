@@ -9,7 +9,6 @@ import ptxo
 
 conv = torch.nn.Conv1d(5, 5, 10)
 inp = torch.zeros([5, 100])
-conv(inp)
 
 conv(inp)
 Traceback (most recent call last):
@@ -20,7 +19,8 @@ Traceback (most recent call last):
     return self._conv_forward(input, self.weight, self.bias)
   File "...site-packages/torch/nn/modules/conv.py", line 259, in _conv_forward
     return F.conv1d(input, weight, bias, self.stride,
-RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10], but got 2-dimensional input of size [5, 100] instead
+RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10],\
+        but got 2-dimensional input of size [5, 100] instead
 
 # Turn on the exception interceptor
 ptxo.on()
@@ -34,7 +34,8 @@ conv(inp)
     return self._conv_forward(input, self.weight, self.bias)
   File "...site-packages/torch/nn/modules/conv.py", line 259, in _conv_forward
     return F.conv1d(input, weight, bias, self.stride,
-RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10], but got 2-dimensional input of size [5, 100] instead
+RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10],\
+        but got 2-dimensional input of size [5, 100] instead
 
 ptxo.off()
 ```
