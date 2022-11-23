@@ -10,6 +10,7 @@ Difficulty is finding the identity of the caller:
 https://stackoverflow.com/questions/2203424/python-how-to-retrieve-class-information-from-a-frame-object
 
 """
+import traceback
 import sys
 import torch
 
@@ -72,7 +73,7 @@ def arg_to_str(val):
         pass
     return val
 
-def print_tensors(exctype, value, tb):
+def print_tensors(exc_type, exc_value, tb):
     while tb:
         frame = tb.tb_frame
         obj = get_forward_obj(frame)
@@ -85,15 +86,16 @@ def print_tensors(exctype, value, tb):
                 item = f'{arg}={val}'
                 items.append(item)
             argstr = ', '.join(items)
-            print(f'{obj.__module__}.{obj.__name__}({argstr})')
-            print(exctype, value)
-            break
+            msg = f'    [PXTO message]: {obj.__module__}.{obj.__name__}({argstr})'
+            print(msg, file=sys.stderr)
+            # print(exc_type, exc_value)
+        traceback.print_tb(tb, limit=1)
         tb = tb.tb_next
+    # raise exc_value
 
 OLD_HOOK = None
 
 def set_hook(hook):
-    print(f'setting hook to {hook.__name__}')
     OLD_HOOK = sys.excepthook
     sys.excepthook = hook
 
@@ -101,9 +103,13 @@ def unset_hook():
     sys.excepthook = OLD_HOOK
 
 def main():
-    set_hook(print_tensors)
+    use_hook = (sys.argv[1] == 'y')
+    if use_hook:
+        set_hook(print_tensors)
     e()
-    unset_hook()
+    if use_hook:
+        unset_hook()
+
 
 if __name__ == '__main__':
     main()
