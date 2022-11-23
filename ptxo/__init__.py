@@ -49,14 +49,11 @@ def _print_tensors(exc_type, exc_value, tb):
             print(msg, file=sys.stderr)
         traceback.print_tb(tb, limit=1)
         tb = tb.tb_next
-
-OLD_HOOK = None
+    traceback.print_exception(exc_type, exc_value, tb)
 
 def on(): 
-    # OLD_HOOK = sys.excepthook
     sys.excepthook = _print_tensors
 
 def off():
-    # sys.excepthook = OLD_HOOK
     sys.excepthook = sys.__excepthook__
 

@@ -28,18 +28,15 @@ import sys
 
 conv = torch.nn.Conv1d(5, 5, 10)
 
-def b(ace, jar):
+def run():
     inp = torch.zeros([5, 100])
     return conv(inp)
-
-def c():
-    return b('abce', [5,3,1])
 
 def main():
     use_hook = (sys.argv[1] == 'y')
     if use_hook:
         ptxo.on()
-    c()
+    run()
 
     if use_hook:
         ptxo.off()
