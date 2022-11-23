@@ -1,5 +1,9 @@
 # PTXO - PyTorch Op Enhanced Exceptions
 
+## Installation
+
+`pip install ptxo`
+
 ## Synopsis
 
 ```python
