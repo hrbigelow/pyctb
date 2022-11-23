@@ -44,7 +44,7 @@ The backtrace is almost identical, but there is one extra line, which shows
 argument names and values of the PyTorch function which caused an exception.
 Tensor values are shown as shape:dtype:device strings.
 
-    `[ptxo]: torch.nn.modules.conv.Conv1d(input=[5,100]:float32:cpu)`
+[ptxo]: torch.nn.modules.conv.Conv1d(input=[5,100]:float32:cpu)
 
 
 

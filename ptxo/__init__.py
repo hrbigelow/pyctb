@@ -2,18 +2,23 @@ import traceback
 import sys
 import torch
 
-OPS = [ torch.nn.modules.conv.Conv1d ]
+OPS = []
+
+def init():
+    for mod in torch.nn.modules.__dict__.values():
+        if hasattr(mod, 'forward'):
+            OPS.append(mod)
+
+# OPS.append( torch.nn.modules.conv.Conv1d )
 
 def get_forward_obj(frame):
     """
     Finds an object with a forward method in the current frame's globals
     and whose class is in a registry of classes
     """
-    obj = next((o for o in frame.f_globals.values() if o in OPS), None)
-    if obj is None:
-        return None
-    if obj.forward.__code__ is frame.f_code:
-        return obj
+    for obj in frame.f_globals.values():
+        if obj in OPS and obj.forward.__code__ is frame.f_code:
+            return obj
     return None
 
 def _arg_to_str(val):

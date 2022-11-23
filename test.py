@@ -35,6 +35,7 @@ def run():
 def main():
     use_hook = (sys.argv[1] == 'y')
     if use_hook:
+        ptxo.init()
         ptxo.on()
     run()
 
