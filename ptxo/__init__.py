@@ -4,12 +4,9 @@ import torch
 
 OPS = []
 
-def init():
-    for mod in torch.nn.modules.__dict__.values():
-        if hasattr(mod, 'forward'):
-            OPS.append(mod)
-
-# OPS.append( torch.nn.modules.conv.Conv1d )
+for mod in torch.nn.modules.__dict__.values():
+    if hasattr(mod, 'forward'):
+        OPS.append(mod)
 
 def get_forward_obj(frame):
     """
@@ -22,6 +19,11 @@ def get_forward_obj(frame):
     return None
 
 def _arg_to_str(val):
+    """
+    Recursively convert nested values containing torch.Tensors to a string
+    representation of shape:dtype:device.  Use a default string conversion for
+    other arguments.
+    """
     vtype = type(val)
     if isinstance(val, torch.Tensor):
         ten = val
@@ -34,10 +36,11 @@ def _arg_to_str(val):
     elif isinstance(val, dict):
         val = vtype({_arg_to_str(k): _arg_to_str(v) for k, v in val.items()})
     else:
-        pass
+        val = str(val)
     return val
 
 def _print_tensors(exc_type, exc_value, tb):
+    print('Traceback (most recent call last):', file=sys.stderr)
     while tb:
         frame = tb.tb_frame
         obj = get_forward_obj(frame)
