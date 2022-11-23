@@ -5,12 +5,13 @@ How do I get the whole traceback (all frames?)
 The frames seem to be only recorded from the first point when an exception is
 caught
 
+Difficulty is finding the identity of the caller:
+
+https://stackoverflow.com/questions/2203424/python-how-to-retrieve-class-information-from-a-frame-object
+
 """
 import sys
 import torch
-
-def a(man, chi):
-    raise BaseException('a')
 
 conv = torch.nn.Conv1d(5, 5, 10)
 
@@ -23,37 +24,37 @@ def c(foo, bar):
     return b('abce', [5,3,1])
 
 def d(yab, tab):
-    try:
-        return c('a', 'baz')
-    except BaseException as ex:
-        raise ex
-
-def d(yab, tab):
     return c(5, 'a')
 
 def e(*args):
-    return d('c', [1,2,3])
+    return d({}, 'abc')
 
-def f(*args):
-    return e({}, 'abc')
+OPS = [ torch.nn.modules.conv.Conv1d ]
 
+def get_name(frame):
+    code = frame.f_code
+    name = code.co_name
+    for objname, obj in frame.f_globals.items():
+        try:
+            assert obj.__dict__[name].__code__ is code
+        except Exception:
+            pass
+        else: # obj is the class that defines our method
+            name = '%s.%s' % ( objname, name )
+            break
+    return name
 
-def thr(arg):
-    raise BaseException(arg)
-
-def trycatchraise():
-    try:
-        thr()
-    except BaseException as ex:
-        raise BaseException(f'trycatchraise: {ex}')
-
-def trycatch():
-    try:
-        thr()
-    except BaseException as ex:
-        return 10
-
-OPS = { torch.nn.modules.conv.Conv1d }
+def get_forward_obj(frame):
+    """
+    Finds an object with a forward method in the current frame's globals
+    and whose class is in a registry of classes
+    """
+    obj = next((o for o in frame.f_globals.values() if o in OPS), None)
+    if obj is None:
+        return None
+    if obj.forward.__code__ is frame.f_code:
+        return obj
+    return None
 
 def arg_to_str(val):
     vtype = type(val)
@@ -74,24 +75,25 @@ def arg_to_str(val):
 def print_tensors(exctype, value, tb):
     while tb:
         frame = tb.tb_frame
-        code = frame.f_code
-        locs = frame.f_locals
-        caller = locs.get('self', None)
-        if type(caller) in OPS:
+        obj = get_forward_obj(frame)
+        if obj is not None:
             items = []
-            for arg, val in locs.items():
+            for arg, val in frame.f_locals.items():
                 if arg == 'self':
                     continue
                 val = arg_to_str(val)
                 item = f'{arg}={val}'
                 items.append(item)
             argstr = ', '.join(items)
-            print(f'{type(caller).__name__}({argstr})')
+            print(f'{obj.__module__}.{obj.__name__}({argstr})')
+            print(exctype, value)
+            break
         tb = tb.tb_next
 
 OLD_HOOK = None
 
 def set_hook(hook):
+    print(f'setting hook to {hook.__name__}')
     OLD_HOOK = sys.excepthook
     sys.excepthook = hook
 
@@ -100,7 +102,7 @@ def unset_hook():
 
 def main():
     set_hook(print_tensors)
-    f()
+    e()
     unset_hook()
 
 if __name__ == '__main__':
