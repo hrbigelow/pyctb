@@ -76,7 +76,7 @@ def _frame_argvals(frame):
     return items
 
 def _argvals_hook(exc_type, exc_value, tb):
-    print('PTXO Traceback (most recent call last):', file=sys.stderr)
+    print('Custom Traceback (most recent call last):', file=sys.stderr)
     while tb:
         frame = tb.tb_frame
         args = _frame_argvals(frame)
