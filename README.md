@@ -47,11 +47,10 @@ RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10], 
 ptxo.off()
 ```
 
-The backtrace is almost identical, but there is one extra line, which shows
-argument names and values of the PyTorch function which caused an exception.
-Tensor values are shown as shape:dtype:device strings.
-
-`[ptxo]: torch.nn.modules.conv.Conv1d(input=[5,100]:float32:cpu)`
+For each frame in the traceback, pxto adds a line showing the actual values of
+arguments in the call as a string representation.  The string representation
+may be customized based on type.  Currently the only customization is
+displaying all `torch.Tensor` arguments in a format of `shape:dtype:device`.
 
 
 
