@@ -24,8 +24,12 @@ Traceback (most recent call last):
   File "/home/henry/miniconda3/envs/pytorch181/lib/python3.9/site-packages/torch/nn/modules/conv.py", line 259, in _conv_forward
     return F.conv1d(input, weight, bias, self.stride,
 RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10], but got 2-dimensional input of size [5, 100] instead
->>> ptxo.on()
 >>>
+>>>
+>>> # add one or more rendering libraries as needed (found in render directory)
+>>> ptxo.add('pytorch_render')
+>>> ptxo.on()
+>>>  
 >>>
 >>>
 >>> conv(inp)

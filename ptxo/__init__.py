@@ -1,22 +1,23 @@
+import importlib
 import traceback
 import inspect
 import sys
-import torch
-from pprint import pprint
+
+RENDERS = {} # type => render_func
+
+def add(renderer):
+    path = '.'.join(('ptxo.render', renderer))
+    mod = importlib.import_module(path) 
+    RENDERS.update(mod.MAP)
 
 def _arg_to_str(val):
     """
-    Recursively convert nested values containing torch.Tensors to a string
-    representation of shape:dtype:device.  Use a default string conversion for
-    other arguments.
+    Recursively convert nested values using functions registered in RENDERS.
     """
     vtype = type(val)
-    if isinstance(val, torch.Tensor):
-        ten = val
-        shape_str = '[' + ','.join(str(d) for d in ten.shape) + ']'
-        dtype_str = str(ten.dtype).split('.')[1]
-        dev_str = ten.device.type
-        val = f'{shape_str}:{dtype_str}:{dev_str}'
+    rfunc = RENDERS.get(vtype, None)
+    if rfunc is not None:
+        val = rfunc(val)
     elif isinstance(val, (tuple, list, set)):
         val = vtype(_arg_to_str(v) for v in val)
     elif isinstance(val, dict):
