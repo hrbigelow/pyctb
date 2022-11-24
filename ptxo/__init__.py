@@ -2,13 +2,40 @@ import importlib
 import traceback
 import inspect
 import sys
+from . import register
 
 RENDERS = {} # type => render_func
 
-def add(renderer):
-    path = '.'.join(('ptxo.render', renderer))
-    mod = importlib.import_module(path) 
-    RENDERS.update(mod.MAP)
+def inventory():
+    funcs = {}
+    for name, obj in inspect.getmembers(register, inspect.isfunction):
+        doc = inspect.getdoc(obj)
+        funcs[name] = doc.split('\n')
+    # Print out in tabular format
+    rows = []
+    for name, doclines in funcs.items():
+        gap = ' ' * (len(name) + 1)
+        hdr = f'{name}:'
+        for line in doclines:
+            row = f'{hdr}   {line}'
+            rows.append(row)
+            hdr = gap
+        rows.append('')
+    final = '\n'.join(rows)
+    print(final)
+
+def add(group):
+    regfunc = inspect.getattr_static(register, group, None)
+    if regfunc is None:
+        raise ValueError(
+                f'Requested \'{group}\' which does not exist in the inventory. '
+                f'Use inventory() function to see all options.')
+    try:
+        fmap = regfunc()
+    except BaseException as ex:
+        raise ValueError(
+            f'Error when attempting to register render group \'{group}\': {ex}')
+    RENDERS.update(fmap)
 
 def _arg_to_str(val):
     """
