@@ -1,26 +1,6 @@
 """
-Experiment to see what information is present in the stack trace
-How do I get the whole traceback (all frames?)
-
-The frames seem to be only recorded from the first point when an exception is
-caught
-
-Difficulty is finding the identity of the caller:
-
 https://stackoverflow.com/questions/2203424/python-how-to-retrieve-class-information-from-a-frame-object
 
-def get_name(frame):
-    code = frame.f_code
-    name = code.co_name
-    for objname, obj in frame.f_globals.items():
-        try:
-            assert obj.__dict__[name].__code__ is code
-        except Exception:
-            pass
-        else: # obj is the class that defines our method
-            name = '%s.%s' % ( objname, name )
-            break
-    return name
 """
 import torch
 import ptxo

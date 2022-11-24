@@ -1,22 +1,8 @@
 import traceback
+import inspect
 import sys
 import torch
-
-OPS = []
-
-for mod in torch.nn.modules.__dict__.values():
-    if hasattr(mod, 'forward'):
-        OPS.append(mod)
-
-def get_forward_obj(frame):
-    """
-    Finds an object with a forward method in the current frame's globals
-    and whose class is in a registry of classes
-    """
-    for obj in frame.f_globals.values():
-        if obj in OPS and obj.forward.__code__ is frame.f_code:
-            return obj
-    return None
+from pprint import pprint
 
 def _arg_to_str(val):
     """
@@ -39,28 +25,53 @@ def _arg_to_str(val):
         val = str(val)
     return val
 
-def _print_tensors(exc_type, exc_value, tb):
-    print('Traceback (most recent call last):', file=sys.stderr)
+def _frame_argvals(frame):
+    """
+    Get formatted argument values as strings.  Preserve the order
+    """
+    av = inspect.getargvalues(frame)
+    items = []
+    for arg in av.args:
+        val = _arg_to_str(av.locals[arg])
+        items.append((arg, val))
+    if av.varargs is not None:
+        vals = av.locals[av.varargs]
+        for pos, val in enumerate(vals):
+            arg = f'{av.varargs}[{pos}]'
+            val = _arg_to_str(val)
+            items.append((arg, val))
+    if av.keywords is not None:
+        valmap = av.locals[av.keywords]
+        for arg, val in valmap.items():
+            val = _arg_to_str(val)
+            items.append((arg, val))
+    return items
+
+def _argvals_hook(exc_type, exc_value, tb):
+    print('PTXO Traceback (most recent call last):', file=sys.stderr)
     while tb:
         frame = tb.tb_frame
-        obj = get_forward_obj(frame)
-        if obj is not None:
-            items = []
-            for arg, val in frame.f_locals.items():
-                if arg == 'self':
-                    continue
-                val = _arg_to_str(val)
-                item = f'{arg}={val}'
-                items.append(item)
-            argstr = ', '.join(items)
-            msg = f'    [ptxo]: {obj.__module__}.{obj.__name__}({argstr})'
-            print(msg, file=sys.stderr)
+        args = _frame_argvals(frame)
+        mod = inspect.getmodule(frame.f_code)
+        name = frame.f_code.co_name
+        binds = []
+
+        for arg, val in args:
+            bind = f'{arg}={val}'
+            binds.append(bind)
+        arglist = ', '.join(b for b in binds)
+        if mod is None:
+            func = name
+        else:
+            func = f'{mod.__name__}.{name}'
+        call = f'  {func}({arglist})'
+        print(call, file=sys.stderr)
         traceback.print_tb(tb, limit=1)
         tb = tb.tb_next
     traceback.print_exception(exc_type, exc_value, tb)
 
 def on(): 
-    sys.excepthook = _print_tensors
+    sys.excepthook = _argvals_hook
 
 def off():
     sys.excepthook = sys.__excepthook__

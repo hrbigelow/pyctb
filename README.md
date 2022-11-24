@@ -2,44 +2,47 @@
 
 ## Installation
 
-`pip install ptxo`
+pip install ptxo
 
 ## Synopsis
 
 ```python
 
-import torch
-import ptxo
-
-conv = torch.nn.Conv1d(5, 5, 10)
-inp = torch.zeros([5, 100])
-
-conv(inp)
+>>> import torch
+>>> import ptxo
+>>>
+>>> conv = torch.nn.Conv1d(5, 5, 10)
+>>> inp = torch.zeros([5, 100])
+>>>
+>>> conv(inp)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-  File "...site-packages/torch/nn/modules/module.py", line 889, in _call_impl
+  File "/home/henry/miniconda3/envs/pytorch181/lib/python3.9/site-packages/torch/nn/modules/module.py", line 889, in _call_impl
     result = self.forward(*input, **kwargs)
-  File "...site-packages/torch/nn/modules/conv.py", line 263, in forward
+  File "/home/henry/miniconda3/envs/pytorch181/lib/python3.9/site-packages/torch/nn/modules/conv.py", line 263, in forward
     return self._conv_forward(input, self.weight, self.bias)
-  File "...site-packages/torch/nn/modules/conv.py", line 259, in _conv_forward
+  File "/home/henry/miniconda3/envs/pytorch181/lib/python3.9/site-packages/torch/nn/modules/conv.py", line 259, in _conv_forward
     return F.conv1d(input, weight, bias, self.stride,
-RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10],\
-        but got 2-dimensional input of size [5, 100] instead
-
-# Turn on the exception interceptor
-ptxo.on()
-
-conv(inp)
+RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10], but got 2-dimensional input of size [5, 100] instead
+>>> ptxo.on()
+>>>
+>>>
+>>>
+>>> conv(inp)
+PTXO Traceback (most recent call last):
+  <module>()
   File "<stdin>", line 1, in <module>
-  File "...site-packages/torch/nn/modules/module.py", line 889, in _call_impl
+  torch.nn.modules.module._call_impl(self=Conv1d(5, 5, kernel_size=(10,), stride=(1,)), input[0]=[5,100]:float32:cpu)
+  File "/home/henry/miniconda3/envs/pytorch181/lib/python3.9/site-packages/torch/nn/modules/module.py", line 889, in _call_impl
     result = self.forward(*input, **kwargs)
-    [ptxo]: torch.nn.modules.conv.Conv1d(input=[5,100]:float32:cpu)
-  File "...site-packages/torch/nn/modules/conv.py", line 263, in forward
+  torch.nn.modules.conv.forward(self=Conv1d(5, 5, kernel_size=(10,), stride=(1,)), input=[5,100]:float32:cpu)
+  File "/home/henry/miniconda3/envs/pytorch181/lib/python3.9/site-packages/torch/nn/modules/conv.py", line 263, in forward
     return self._conv_forward(input, self.weight, self.bias)
-  File "...site-packages/torch/nn/modules/conv.py", line 259, in _conv_forward
+  torch.nn.modules.conv._conv_forward(self=Conv1d(5, 5, kernel_size=(10,), stride=(1,)), input=[5,100]:float32:cpu, weight=[5,5,10]:float32:cpu, bias=[5]:float32:cpu)
+  File "/home/henry/miniconda3/envs/pytorch181/lib/python3.9/site-packages/torch/nn/modules/conv.py", line 259, in _conv_forward
     return F.conv1d(input, weight, bias, self.stride,
-RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10],\
-        but got 2-dimensional input of size [5, 100] instead
+RuntimeError: Expected 3-dimensional input for 3-dimensional weight [5, 5, 10], but got 2-dimensional input of size [5, 100] instead
+>>>
 
 ptxo.off()
 ```
