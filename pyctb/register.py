@@ -2,8 +2,7 @@ from . import rfuncs
 
 def torch():
     """
-    Render a Torch tensor and Parameter
-    Second line
+    Render a torch.Tensor or torch.nn.parameter.Parameter
     """
     import torch
     fmap = {
@@ -14,7 +13,7 @@ def torch():
 
 def tf():
     """
-    Render a tf.Tensor or tf.Variable
+    Render a tf.Tensor, tf.Variable, or EagerTensor
     """
     import tensorflow as tf
     from tensorflow.python.framework.ops import EagerTensor

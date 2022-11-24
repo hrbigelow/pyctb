@@ -2,7 +2,7 @@
 https://stackoverflow.com/questions/2203424/python-how-to-retrieve-class-information-from-a-frame-object
 
 """
-import ptxo
+import pyctb 
 import sys
 
 def torch_test():
@@ -19,9 +19,9 @@ def tf_test():
 
 def run(mode, func):
     """
-    Runs the func under normal and ptxo exception hooks
+    Runs the func under normal and pyctb exception hooks
     """
-    ptxo.add(mode)
+    pyctb.add(mode)
     print(f'Testing {mode}')
     print('Normal traceback:')
     try:
@@ -30,8 +30,8 @@ def run(mode, func):
         sys.excepthook(*sys.exc_info())
         pass
 
-    ptxo.on()
-    print('\n\nPTXO traceback:')
+    pyctb.on()
+    print('\n\nCustom traceback:')
     try:
         func()
     except:
