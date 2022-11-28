@@ -1,7 +1,7 @@
-import importlib
-import traceback
-import inspect
 import sys
+import traceback
+import stack_data 
+import inspect
 from . import register
 
 RENDERS = {} # type => render_func
@@ -24,7 +24,10 @@ def inventory():
     final = '\n'.join(rows)
     print(final)
 
-def add(group):
+def add(cls, render_func):
+    RENDERS[cls] = render_func
+
+def add_group(group):
     regfunc = inspect.getattr_static(register, group, None)
     if regfunc is None:
         raise ValueError(
@@ -37,7 +40,7 @@ def add(group):
             f'Error when attempting to register render group \'{group}\': {ex}')
     RENDERS.update(fmap)
 
-def _arg_to_str(val):
+def _convert(val):
     """
     Recursively convert nested values using functions registered in RENDERS.
     """
@@ -46,60 +49,50 @@ def _arg_to_str(val):
     if rfunc is not None:
         val = rfunc(val)
     elif isinstance(val, (tuple, list, set)):
-        val = vtype(_arg_to_str(v) for v in val)
+        val = vtype(_convert(v) for v in val)
     elif isinstance(val, dict):
-        val = vtype({_arg_to_str(k): _arg_to_str(v) for k, v in val.items()})
+        val = vtype({_convert(k): _convert(v) for k, v in val.items()})
     else:
         val = str(val)
     return val
 
-def _frame_argvals(frame):
-    """
-    Get formatted argument values as strings.  Preserve the order
-    """
-    av = inspect.getargvalues(frame)
-    items = []
-    for arg in av.args:
-        val = _arg_to_str(av.locals[arg])
-        items.append((arg, val))
-    if av.varargs is not None:
-        vals = av.locals[av.varargs]
-        for pos, val in enumerate(vals):
-            arg = f'{av.varargs}[{pos}]'
-            val = _arg_to_str(val)
-            items.append((arg, val))
-    if av.keywords is not None:
-        valmap = av.locals[av.keywords]
-        for arg, val in valmap.items():
-            val = _arg_to_str(val)
-            items.append((arg, val))
-    return items
+def _argvars(frame_info, exec_node):
+    # return variables which have node as a parent
+    vars = []
+    for var in frame_info.variables:
+        for node in var.nodes:
+            if node.parent == exec_node:
+                vars.append(var)
+    return vars
 
-def _argvals_hook(exc_type, exc_value, tb):
-    print('Custom Traceback (most recent call last):', file=sys.stderr)
-    while tb:
-        frame = tb.tb_frame
-        args = _frame_argvals(frame)
-        mod = inspect.getmodule(frame.f_code)
-        name = frame.f_code.co_name
-        binds = []
+def _hook(exc_type, exc_value, tb):
+    print('Custom Traceback (most recent call last):')
+    options = stack_data.Options(before=1, after=1)
+    for fi in stack_data.FrameInfo.stack_data(tb, options):
+        node = fi.executing.node
+        ex = fi.executing
+        
+        print(f"File \"{fi.filename}\", line {fi.lineno}, in {ex.code_qualname()}")
+        # print("-----------")
+        for line in fi.lines:
+            if line is stack_data.LINE_GAP:
+                print("       (...)")
+            else:
+                # markers = stack_data.markers_from_ranges(
+                        # line.executing_node_ranges, convert_ex)
+                pfx = '-->' if line.is_current else '   '
+                print(f'{pfx} {line.lineno:4} {line.render()}')
 
-        for arg, val in args:
-            bind = f'{arg}={val}'
-            binds.append(bind)
-        arglist = ', '.join(b for b in binds)
-        if mod is None:
-            func = name
-        else:
-            func = f'{mod.__name__}.{name}'
-        call = f'  {func}({arglist})'
-        print(call, file=sys.stderr)
-        traceback.print_tb(tb, limit=1)
+        if node is not None:
+            exec_vars = _argvars(fi, node)
+            for var in exec_vars:
+                val = _convert(var.value)
+                print(f'         {var.name} = {val}')
         tb = tb.tb_next
     traceback.print_exception(exc_type, exc_value, tb)
 
 def on(): 
-    sys.excepthook = _argvals_hook
+    sys.excepthook = _hook
 
 def off():
     sys.excepthook = sys.__excepthook__
