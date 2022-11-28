@@ -6,10 +6,28 @@ pip install pyctb
 
 ## Synopsis
 
-pyctb is tool for customizing Python traceback information.  It adds lines to
-each traceback frame showing the argument names and values used.  Since values
-of compound types may be quite large, it allows defining and activating `render
-functions` for types of your choice.
+pyctb is tool for customizing Python traceback information.  For each traceback
+frame, pyctb adds extra lines of the form `var = render(value)` for each
+variable in the currently executing function of that frame.  By default,
+`render` simply calls `str(value)`.  However, the user may register
+sub-functions for rendering specific types of their choice.
+
+You may render a new function to render instances of a class with:
+
+`pyctb.add(cls, func)`
+
+Objects are rendered using the most specific (in method-resolution order)
+rendering function registered.  For example:
+
+```python
+pyctb.add(Tabby, render_tabby)
+pyctb.add(Cat, render_cat)
+pyctb.add(Animal, render_animal)
+```
+
+Then, a `Tabby` will be rendered with `render_tabby`.  A `Persian` will use
+`render_cat`, and `Dog` will use `render_animal`, and so forth.  By default,
+`object` is registered with `str`.
 
 ```python
 
@@ -21,19 +39,19 @@ pyctb.inventory()
 tf:   Render a tf.Tensor, tf.Variable, or EagerTensor
 torch:   Render a torch.Tensor or torch.nn.parameter.Parameter
 
-# add the torch render function 
-pyctb.add('torch')
+# add the torch render group
+pyctb.add_group('torch')
 
 conv = torch.nn.Conv1d(5, 5, 10)
 inp = torch.zeros([5, 100])
 
-# This will produce an exception and traceback (see below)
+# This will produce an exception and the default traceback (see below)
 conv(inp)
 
 # Turn on the custom traceback
 pyctb.on()
 
-# This will produce an exception and a custom traceback
+# This will produce the same exception but display a custom traceback
 # showing argument values
 conv(inp)
 

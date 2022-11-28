@@ -1,4 +1,3 @@
-import sys
 import tensorflow as tf
 
 def matmul_test():

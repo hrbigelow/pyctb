@@ -4,7 +4,7 @@ import stack_data
 import inspect
 from . import register
 
-RENDERS = {} # type => render_func
+RENDERS = { object: str } # type => render_func
 
 def inventory():
     """
@@ -36,8 +36,8 @@ def add(cls, render_func):
 
 def add_group(group):
     """
-    Register `group`, a named group of rendering functions for associated
-    types.
+    Register `group`, a named group of rendering functions associated
+    with types.  Use `inventory()` to see available groups.
     """
     regfunc = inspect.getattr_static(register, group, None)
     if regfunc is None:
@@ -56,19 +56,19 @@ def _convert(val):
     Recursively convert nested values using functions registered in RENDERS.
     """
     vtype = type(val)
-    rfunc = RENDERS.get(vtype, None)
-    if rfunc is not None:
-        val = rfunc(val)
-    elif isinstance(val, (tuple, list, set)):
+
+    # recursively convert composite types
+    if isinstance(val, (tuple, list, set)):
         val = vtype(_convert(v) for v in val)
     elif isinstance(val, dict):
         val = vtype({_convert(k): _convert(v) for k, v in val.items()})
     else:
-        val = str(val)
+        rfunc = next(RENDERS[cls] for cls in vtype.__mro__ if cls in RENDERS)
+        val = rfunc(val)
     return val
 
 def _argvars(frame_info, exec_node):
-    # return variables which have node as a parent
+    # find all variables which have exec_node as a parent
     vars = []
     for var in frame_info.variables:
         for node in var.nodes:
@@ -80,10 +80,9 @@ def _hook(exc_type, exc_value, tb):
     print('Custom Traceback (most recent call last):')
     options = stack_data.Options(before=1, after=1)
     for fi in stack_data.FrameInfo.stack_data(tb, options):
-        node = fi.executing.node
-        ex = fi.executing
+        qname = fi.executing.code_qualname() 
         
-        print(f"File \"{fi.filename}\", line {fi.lineno}, in {ex.code_qualname()}")
+        print(f"File \"{fi.filename}\", line {fi.lineno}, in {qname}")
         # print("-----------")
         for line in fi.lines:
             if line is stack_data.LINE_GAP:
@@ -94,11 +93,12 @@ def _hook(exc_type, exc_value, tb):
                 pfx = '-->' if line.is_current else '   '
                 print(f'{pfx} {line.lineno:4} {line.render()}')
 
-        if node is not None:
-            exec_vars = _argvars(fi, node)
+        exec_node = fi.executing.node
+        if exec_node is not None:
+            exec_vars = _argvars(fi, exec_node)
             for var in exec_vars:
                 val = _convert(var.value)
-                print(f'         {var.name} = {val}')
+                print(f'-->      {var.name} = {val}')
         tb = tb.tb_next
     traceback.print_exception(exc_type, exc_value, tb)
 

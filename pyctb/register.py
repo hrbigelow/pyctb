@@ -1,5 +1,10 @@
 from . import rfuncs
 
+"""
+Each top-level function in this file names a `render group` which will appear
+in pyctb.inventory(), and can be used with `add_group`.  
+"""
+
 def torch():
     """
     Render a torch.Tensor or torch.nn.parameter.Parameter

@@ -1,4 +1,3 @@
-
 def tf_tensor(ten):
     # Render a tensorflow tensor
     shape_str = '[' + ','.join(map(str, ten.shape)) + ']'
