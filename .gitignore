@@ -1,3 +1,8 @@
 __pycache__
 .vscode
+pyctb/version.py
+dist
+build
+*.egg-info
+
 
