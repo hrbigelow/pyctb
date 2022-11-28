@@ -7,6 +7,10 @@ from . import register
 RENDERS = {} # type => render_func
 
 def inventory():
+    """
+    List all available registration groups.  Each group defines rendering 
+    functions for the listed types.  A group may be added using `add_group`
+    """
     funcs = {}
     for name, obj in inspect.getmembers(register, inspect.isfunction):
         doc = inspect.getdoc(obj)
@@ -25,9 +29,16 @@ def inventory():
     print(final)
 
 def add(cls, render_func):
+    """
+    Add `render_func` to be used to render instances of `cls`
+    """
     RENDERS[cls] = render_func
 
 def add_group(group):
+    """
+    Register `group`, a named group of rendering functions for associated
+    types.
+    """
     regfunc = inspect.getattr_static(register, group, None)
     if regfunc is None:
         raise ValueError(
@@ -92,8 +103,16 @@ def _hook(exc_type, exc_value, tb):
     traceback.print_exception(exc_type, exc_value, tb)
 
 def on(): 
+    """
+    Activate pyctb to display the custom traceback during an unhandled
+    exception.
+    """
     sys.excepthook = _hook
 
 def off():
+    """
+    Deactivate pyctb.  The default traceback will be displayed upon an
+    unhandled exception.
+    """
     sys.excepthook = sys.__excepthook__
 
