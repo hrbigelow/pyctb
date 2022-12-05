@@ -10,5 +10,3 @@ def binop_test():
     b = torch.randn(3,6,7)
     return a / b
 
-
-
