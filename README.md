@@ -47,7 +47,7 @@ rendering specific types of their choice.  Such specific rendering functions
 are needed for types that have too large of an output with just `repr`.
 
 pyctb relies on the excellent
-[https://github.com/alexmojaki/stack_data](stack_data) repo from Alex Hall for
+[stack_data](https://github.com/alexmojaki/stack_data) repo from Alex Hall for
 inspecting the frame information variable names and values.
 
 You may register a new rendering function using:
