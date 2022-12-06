@@ -1,4 +1,6 @@
+import sys
 import tensorflow as tf
+import pyctb
 
 def matmul_test():
     a = tf.random.uniform([3,5,7], 0, 100, dtype=tf.float32)
@@ -20,4 +22,27 @@ def fadd(a, b):
 
 def test3():
     return add(add(2, 4), fadd(3, 5))
+
+def main(before_context, after_context):
+    pyctb.add_group('tf')
+    pyctb.config(before_context, after_context)
+    for test in (matmul_test, binop_test, test3):
+        pyctb.off()
+        print(f'============== {test.__name__} ==============')
+        try:
+            test()
+        except:
+            sys.excepthook(*sys.exc_info())
+        print('\n')
+        pyctb.on()
+        try:
+            test()
+        except:
+            sys.excepthook(*sys.exc_info())
+        print('\n\n')
+
+if __name__ == '__main__':
+    before = int(sys.argv[1])
+    after = int(sys.argv[2])
+    main(before, after)
 

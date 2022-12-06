@@ -1,10 +1,18 @@
 import sys
 import traceback
+from collections import namedtuple
 import stack_data 
 import inspect
 from . import register
 
-RENDERS = { object: str } # type => render_func
+RENDERS = { object: repr } # type => render_func
+
+class Config(object):
+    def __init__(self):
+        self.before = 0
+        self.after = 0
+
+CONFIG = Config() 
 
 def inventory():
     """
@@ -30,7 +38,9 @@ def inventory():
 
 def add(cls, render_func):
     """
-    Add `render_func` to be used to render instances of `cls`
+    Add `render_func` to be used to render instances of `cls`.  `render_func`
+    must have signature:  obj -> str, where isinstance(obj, cls) is true.  You
+    may call `add` repeatedly to register handlers for different classes.
     """
     RENDERS[cls] = render_func
 
@@ -78,11 +88,11 @@ def _argvars(frame_info, exec_node):
 
 def _hook(exc_type, exc_value, tb):
     print('Custom Traceback (most recent call last):')
-    options = stack_data.Options(before=1, after=1)
+    options = stack_data.Options(before=CONFIG.before, after=CONFIG.after)
     for fi in stack_data.FrameInfo.stack_data(tb, options):
         qname = fi.executing.code_qualname() 
         
-        print(f"File \"{fi.filename}\", line {fi.lineno}, in {qname}")
+        print(f"  File \"{fi.filename}\", line {fi.lineno}, in {qname}")
         # print("-----------")
         for line in fi.lines:
             if line is stack_data.LINE_GAP:
@@ -91,16 +101,27 @@ def _hook(exc_type, exc_value, tb):
                 # markers = stack_data.markers_from_ranges(
                         # line.executing_node_ranges, convert_ex)
                 pfx = '-->' if line.is_current else '   '
-                print(f'{pfx} {line.lineno:4} {line.render()}')
+                print(f'{pfx} {line.render()}')
 
         exec_node = fi.executing.node
         if exec_node is not None:
             exec_vars = _argvars(fi, exec_node)
             for var in exec_vars:
                 val = _convert(var.value)
-                print(f'-->      {var.name} = {val}')
+                print(f'         {var.name} = {val}')
         tb = tb.tb_next
     traceback.print_exception(exc_type, exc_value, tb)
+
+def config(before_ctx, after_ctx):
+    """
+    Configure the traceback to display, for each frame, `before_ctx` and
+    `after_ctx` pieces of context before (and after) the currently executing
+    piece.  A "piece" is defined as in Alex Hall's
+    https://github.com/alexmojaki/stack_data repo, it corresponds to one
+    logical piece of source code that could be executed.
+    """
+    CONFIG.before = before_ctx
+    CONFIG.after = after_ctx
 
 def on(): 
     """
